@@ -27,12 +27,106 @@ async function run() {
   try {
     const users = client.db("Craft-Connect").collection("users");
     const usersPost = client.db("Craft-Connect").collection("usersPost");
+    const advertisePost = client.db("Craft-Connect").collection("advertisePost");
     const reactions = client.db("Craft-Connect").collection("reactions");
     const comments = client.db("Craft-Connect").collection("comments");
 
     // home page get api
     app.get("/", (req, res) => {
       res.send("Craft connect server is running..");
+    });
+
+     app.get("/allusers", async (req, res) => {
+       const query = {};
+       const result = await users.find(query).toArray();
+       res.send(result);
+     });
+
+    //get my post
+    app.get("/myposts", async (req, res) => {
+      const email = req.query.email;
+      // console.log(email);
+      const query = {
+        userEmail: email,
+      };
+      const result = await usersPost.find(query).toArray();
+      res.send(result);
+    });
+
+    //get user by email // my profile
+     app.get("/users", async (req, res) => {
+       const email = req.query.email;
+       const query = {
+         email: email,
+       };
+       const result = await users.find(query).toArray();
+       res.send(result);
+     });
+    //get user by id 
+    app.get("/user/:email", async (req, res) => {
+      const UserEmail = req.params.email;
+      //  console.log(UserEmail);
+      const query = {
+        email: UserEmail
+      };
+      const userByEmail = await users.findOne(query);
+      console.log(userByEmail);
+      res.send(userByEmail);
+    });
+
+
+    //update user profile picture
+    app.put("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const coverImage = req.body;
+      console.log(coverImage);
+      const option = { upsert: true };
+      const updatedUser = {
+        $set: {
+          coverPhoto: coverImage.coverImage
+        },
+      };
+      const result = await users.updateOne(
+        filter,
+        updatedUser,
+        option
+      );
+      res.send(result);
+    });
+
+
+    app.put("/profileImg/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const profileImg = req.body;
+      console.log(profileImg.profileImg);
+      // console.log(coverImage);
+      const option = { upsert: true };
+      const updatedUser = {
+        $set: {
+          photoURL: profileImg
+        },
+      };
+      const result = await users.updateOne(
+        filter,
+        updatedUser,
+        option
+      );
+      res.send(result);
+    });
+
+
+    //get user by id
+    app.get("/user/:email", async (req, res) => {
+      const UserEmail = req.params.email;
+      //  console.log(UserEmail);
+      const query = {
+        email: UserEmail,
+      };
+      const userByEmail = await users.findOne(query);
+      console.log(userByEmail);
+      res.send(userByEmail);
     });
 
     // post added
@@ -107,6 +201,7 @@ async function run() {
     // post details
     app.get("/postDetails/:id", async (req, res) => {
       const id = req.params.id;
+      console.log(id);
       const result = await usersPost.findOne({ _id: ObjectId(id) });
       res.send(result);
     });
@@ -148,7 +243,26 @@ async function run() {
       const result = await comments.deleteOne(filter);
       res.send(result);
     });
-
+    // ++++++++++++++++++++++ Advertising Post Method ++++++++++++++ to frontend 
+    app.post("/advertising-post/", async (req, res) => {
+      const advertisingData = req.body;
+      const result = await advertisePost.insertOne(advertisingData);
+      res.send(result);
+    })
+    // getting advertisePost 
+    app.get('/advertising-post/', async (req, res) => {
+      const query = {};
+      const result = await advertisePost.find(query).toArray();
+      res.send(result.reverse());
+    });
+    // getting and single add 
+    app.get('/advertising-post/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = {_id: ObjectId(id)}
+      console.log(query, id) 
+      const result = await advertisePost.findOne(query);
+      res.send(result);
+    })
     // HOME page get api
     app.get("/", (req, res) => {
       res.send("Craft connect server is running..");
@@ -160,4 +274,5 @@ run().catch((error) => console.log(error.message));
 
 app.listen(port, (req, res) => {
   console.log("Craft connect server is running..");
-});
+
+}); 
