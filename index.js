@@ -27,14 +27,17 @@ async function run() {
   try {
     const users = client.db("Craft-Connect").collection("users");
     const usersPost = client.db("Craft-Connect").collection("usersPost");
-    const advertisePost = client.db("Craft-Connect").collection("advertisePost");
+    const advertisePost = client
+      .db("Craft-Connect")
+      .collection("advertisePost");
     const reactions = client.db("Craft-Connect").collection("reactions");
     const comments = client.db("Craft-Connect").collection("comments");
     const allProducts = client.db("Craft-Connect").collection("allProducts");
-    const bookMarkedPost = client.db("Craft-Connect").collection("bookMarkedPost");
+    const bookMarkedPost = client
+      .db("Craft-Connect")
+      .collection("bookMarkedPost");
     const addToCart = client.db("Craft-Connect").collection("cartProducts");
     const payments = client.db("Craft-Connect").collection("payments");
-
 
     // home page get api
     app.get("/", (req, res) => {
@@ -47,22 +50,20 @@ async function run() {
       const result = await addToCart.insertOne(product);
       res.send(result);
     });
-    app.post('/create-payment-intent', async (req, res) => {
+    app.post("/create-payment-intent", async (req, res) => {
       const booking = req.body;
       const price = booking.price;
       const amount = price * 100;
       const paymentIntent = await stripe.paymentIntents.create({
         currency: "usd",
         amount: amount,
-        "payment_method_types": [
-          "card"
-        ],
-      })
+        payment_method_types: ["card"],
+      });
       res.send({
         clientSecret: paymentIntent.client_secret,
       });
-    })
-    app.post('/payments', async (req, res) => {
+    });
+    app.post("/payments", async (req, res) => {
       const payment = req.body;
       const result = await payments.insertOne(payment);
       const id = payment.productId;
@@ -70,24 +71,24 @@ async function run() {
       const updateDoc = {
         $set: {
           paid: true,
-          transactionId: payment.transactionId
-        }
-      }
+          transactionId: payment.transactionId,
+        },
+      };
       const updateResult = await addToCart.updateOne(filter, updateDoc);
       res.send(result);
-    })
+    });
     //get cart product
-    app.get('/cartproduct', async (req, res) => {
+    app.get("/cartproduct", async (req, res) => {
       const query = {};
       const result = await addToCart.find(query).toArray();
       res.send(result.reverse());
     });
-    app.get('/cartproduct/:email', async (req, res) => {
+    app.get("/cartproduct/:email", async (req, res) => {
       const email = req.params.email;
       const result = await addToCart.find({ buyerEmail: email }).toArray();
       res.send(result.reverse());
     });
-    app.get('/cartproducts/:id', async (req, res) => {
+    app.get("/cartproducts/:id", async (req, res) => {
       const id = req.params.id;
       console.log(id);
       const query = { _id: ObjectId(id) };
@@ -100,7 +101,6 @@ async function run() {
       const result = await allProducts.find(query).toArray();
       res.send(result);
     });
-
 
     // get all users
     app.get("/allusers", async (req, res) => {
@@ -129,18 +129,17 @@ async function run() {
       const result = await users.find(query).toArray();
       res.send(result);
     });
-    //get user by id 
+    //get user by id
     app.get("/user/:email", async (req, res) => {
       const UserEmail = req.params.email;
       //  console.log(UserEmail);
       const query = {
-        email: UserEmail
+        email: UserEmail,
       };
       const userByEmail = await users.findOne(query);
       //console.log(userByEmail);
       res.send(userByEmail);
     });
-
 
     //update user profile picture
     app.put("/users/:id", async (req, res) => {
@@ -151,17 +150,12 @@ async function run() {
       const option = { upsert: true };
       const updatedUser = {
         $set: {
-          coverPhoto: coverImage.coverImage
+          coverPhoto: coverImage.coverImage,
         },
       };
-      const result = await users.updateOne(
-        filter,
-        updatedUser,
-        option
-      );
+      const result = await users.updateOne(filter, updatedUser, option);
       res.send(result);
     });
-
 
     app.put("/profileImg/:id", async (req, res) => {
       const id = req.params.id;
@@ -172,17 +166,12 @@ async function run() {
       const option = { upsert: true };
       const updatedUser = {
         $set: {
-          photoURL: profileImg
+          photoURL: profileImg,
         },
       };
-      const result = await users.updateOne(
-        filter,
-        updatedUser,
-        option
-      );
+      const result = await users.updateOne(filter, updatedUser, option);
       res.send(result);
     });
-
 
     //get user by id
     app.get("/user/:email", async (req, res) => {
@@ -259,6 +248,49 @@ async function run() {
       res.send(result);
     });
 
+    app.put("/follow", async (req, res) => {
+      const follower = req.body.followerUsers;
+      const following = req.body.followingUsers;
+      const query = { email: follower };
+      const filter = { email: following };
+
+      const followingUser = await users.find(query).toArray();
+      const followerUser = await users.find(filter).toArray();
+
+      const followerName = followingUser[0].displayName;
+      const email = followingUser[0].emil;
+      const photoURL = followingUser[0].photoURL;
+      const followers = { followerName, email, photoURL };
+
+      const followingName = followerUser[0].displayName;
+      const followingEmail = followerUser[0].emil;
+      const followingPhotoURL = followerUser[0].photoURL;
+      const followings = { followingName, followingEmail, followingPhotoURL };
+
+      const followingArray = followingUser[0]?.followings;
+      const newFollowing = [];
+      newFollowing.push(...[followingArray], followings);
+      const updatedDoc1 = {
+        $set: {
+          following: newFollowing,
+        },
+      };
+
+      const followerArray = followerUser[0]?.followers;
+      const newFollower = [];
+      newFollower.push(...[followerArray], followers);
+      const updatedDoc2 = {
+        $set: {
+          followers: newFollower,
+        },
+      };
+      const option = { upsert: true };
+      const result1 = await users.updateOne(query, updatedDoc1, option);
+      const result2 = await users.updateOne(filter, updatedDoc2, option);
+
+      console.log(result1, result2);
+    });
+
     // postReaction
     app.get("/postReactions/:id", async (req, res) => {
       const id = req.params.id;
@@ -310,38 +342,38 @@ async function run() {
       const result = await comments.deleteOne(filter);
       res.send(result);
     });
-    // ++++++++++++++++++++++ Advertising Post Method ++++++++++++++ to frontend 
+    // ++++++++++++++++++++++ Advertising Post Method ++++++++++++++ to frontend
     app.post("/advertising-post/", async (req, res) => {
       const advertisingData = req.body;
       const result = await advertisePost.insertOne(advertisingData);
       res.send(result);
-    })
-    // getting advertisePost 
-    app.get('/advertising-post/', async (req, res) => {
+    });
+    // getting advertisePost
+    app.get("/advertising-post/", async (req, res) => {
       const query = {};
       const result = await advertisePost.find(query).toArray();
       res.send(result.reverse());
     });
-    // getting and single add 
-    app.get('/advertising-post/:id', async (req, res) => {
+    // getting and single add
+    app.get("/advertising-post/:id", async (req, res) => {
       const id = req.params.id;
-      const query = { _id: ObjectId(id) }
-      //console.log(query, id) 
+      const query = { _id: ObjectId(id) };
+      //console.log(query, id)
       const result = await advertisePost.findOne(query);
       res.send(result);
-    })
-    // getting product Data 
-    app.post('/allProduct/', async (req, res) => {
+    });
+    // getting product Data
+    app.post("/allProduct/", async (req, res) => {
       const data = req.body;
       console.log(data);
       const result = await allProducts.insertOne(data);
       res.send(result);
-    })
-    app.get('/allProduct', async (req, res) => {
+    });
+    app.get("/allProduct", async (req, res) => {
       const query = {};
       const result = await allProducts.find(query).toArray();
       res.send(result.reverse());
-    })
+    });
 
     // Mohammad Ali Jinnah
     //Add bookmarked post at DB
@@ -349,7 +381,7 @@ async function run() {
       const bookMarkPost = req.body;
       const result = await bookMarkedPost.insertOne(bookMarkPost);
       res.send(result);
-    })
+    });
 
     //Get data from DB using email
     app.get("/user/bookmarkPost/:email", async (req, res) => {
@@ -357,28 +389,28 @@ async function run() {
       const filter = { bookmarkedUserEmail: email };
       const result = await bookMarkedPost.find(filter).toArray();
       res.send(result);
-    })
+    });
 
     //Delete a document form Bookmarked
     app.delete("/user/bookmarkedPost/:id", async (req, res) => {
       const post_id = req.params.id;
-      const filter = { _id: ObjectId(post_id) }
-      const result = await bookMarkedPost.deleteOne(filter)
-      res.send(result)
-    })
+      const filter = { _id: ObjectId(post_id) };
+      const result = await bookMarkedPost.deleteOne(filter);
+      res.send(result);
+    });
 
-    app.get('/allProducts/', async (req, res) => {
+    app.get("/allProducts/", async (req, res) => {
       const email = req.query.email;
       const filter = { email: email };
       const result = await allProducts.find(filter).toArray();
       res.send(result.reverse());
-    })
-    app.get('/allProducts/:id', async (req, res) => {
+    });
+    app.get("/allProducts/:id", async (req, res) => {
       const id = req.params.id;
-      console.log(id)
+      console.log(id);
       const result = await allProducts.deleteOne({ _id: ObjectId(id) });
       res.send(result);
-    })
+    });
     // HOME page get api
     app.get("/", (req, res) => {
       res.send("Craft connect server is running..");
@@ -390,5 +422,4 @@ run().catch((error) => console.log(error.message));
 
 app.listen(port, (req, res) => {
   console.log("Craft connect server is running..");
-
-}); 
+});
