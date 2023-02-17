@@ -265,13 +265,12 @@ async function run() {
       const photoURL = followingUser[0].photoURL;
       const existingFollower = [...followingUser[0]?.followers];
       const followers = { followerName, email, photoURL };
-      const nothing = followerUser[0]?.followers;
-      newFollower.push(...nothing, followers);
+      const newFollowers = followerUser[0]?.followers;
+      newFollower.push(...newFollowers, followers);
 
       const followingName = followerUser[0].displayName;
       const followingEmail = followerUser[0].email;
       const followingPhotoURL = followerUser[0].photoURL;
-      console.log("from 274", nothing);
       const existingFollowing = followingUser[0]?.following;
       console.log("from 271", existingFollower, existingFollowing);
       const followings = { followingName, followingEmail, followingPhotoURL };
@@ -292,8 +291,8 @@ async function run() {
       const option = { upsert: true };
       const result1 = await users.updateOne(query, updatedDoc1, option);
       const result2 = await users.updateOne(filter, updatedDoc2, option);
-
       console.log(result1, result2);
+      res.send(result1);
     });
 
     // postReaction
