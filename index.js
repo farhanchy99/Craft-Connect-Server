@@ -121,24 +121,24 @@ async function run() {
 
     //update user profile(maruf)
     app.put("/update-users/:id", async (req, res) => {
-      const id = req.params.id; 
+      const id = req.params.id;
       const data = req.body;
       console.log(id);
       const { displayName, email, photoURL } = data;
       const filter = { _id: ObjectId(id) };
-      
+
       const updatedUser = {
         $set: {
           displayName,
           email,
           socialMedia: data.socialMedia,
-          photoURL
+          photoURL,
         },
       };
       const result = await users.updateOne(filter, updatedUser);
       res.send(result);
     });
-    
+
     //check is product already added to cart?
     app.get("/checkCartProduct", async (req, res) => {
       const availableProduct = req.query.id;
@@ -345,20 +345,39 @@ async function run() {
 
     // for like post
 
-    app.put("/users/:id", async (req, res) => {
-      const likesInfo = req.body;
-      // console.log(likesInfo);
-      const ID = req.params.id;
-      const filter = { _id: ObjectId(ID) };
-      const updateDoc = {
+    app.put("/like", async (req, res) => {
+      const likeInfo = req.body;
+      const postId = likeInfo?.postId;
+      const filter = { _id: ObjectId(postId) };
+      const userPost = await usersPost.find(filter).toArray();
+      const newLikes = [];
+      const existingLikes = userPost[0].likes;
+      newLikes.push(...existingLikes, likeInfo);
+
+      const updatedDoc = {
         $set: {
-          likes: likesInfo,
+          likes: newLikes,
         },
       };
-      const option = { upsert: true };
-      const result = await usersPost.updateOne(filter, updateDoc, option);
+      const options = { upsert: true };
+      const result = await usersPost.updateOne(filter, updatedDoc, options);
       res.send(result);
     });
+
+    // app.put("/users/:id", async (req, res) => {
+    //   const likesInfo = req.body;
+    //   console.log(likesInfo);
+    //   const ID = req.params.id;
+    //   const filter = { _id: ObjectId(ID) };
+    //   const updateDoc = {
+    //     $set: {
+    //       likes: likesInfo,
+    //     },
+    //   };
+    //   const option = { upsert: true };
+    //   const result = await usersPost.updateOne(filter, updateDoc, option);
+    //   res.send(result);
+    // });
 
     app.put("/follow", async (req, res) => {
       const follower = req.body.followerUsers;
@@ -547,15 +566,12 @@ async function run() {
       res.send(result);
     });
 
-
-
     // HOME page get api
     app.get("/", (req, res) => {
       res.send("Craft connect server is running..");
     });
+  } finally {
   }
-  finally {
- }
 }
 run().catch((error) => console.log(error.message));
 
