@@ -256,29 +256,34 @@ async function run() {
 
       const followingUser = await users.find(query).toArray();
       const followerUser = await users.find(filter).toArray();
+      // console.log(followingUser, followerUser);
 
+      const newFollower = [];
+      const newFollowing = [];
       const followerName = followingUser[0].displayName;
-      const email = followingUser[0].emil;
+      const email = followingUser[0].email;
       const photoURL = followingUser[0].photoURL;
+      const existingFollower = [...followingUser[0]?.followers];
       const followers = { followerName, email, photoURL };
+      const nothing = followerUser[0]?.followers;
+      newFollower.push(...nothing, followers);
 
       const followingName = followerUser[0].displayName;
-      const followingEmail = followerUser[0].emil;
+      const followingEmail = followerUser[0].email;
       const followingPhotoURL = followerUser[0].photoURL;
+      console.log("from 274", nothing);
+      const existingFollowing = followingUser[0]?.following;
+      console.log("from 271", existingFollower, existingFollowing);
       const followings = { followingName, followingEmail, followingPhotoURL };
+      newFollowing.push(...existingFollowing, followings);
+      console.log("from 277", newFollower, newFollowing);
 
-      const followingArray = followingUser[0]?.followings;
-      const newFollowing = [];
-      newFollowing.push(...[followingArray], followings);
       const updatedDoc1 = {
         $set: {
           following: newFollowing,
         },
       };
 
-      const followerArray = followerUser[0]?.followers;
-      const newFollower = [];
-      newFollower.push(...[followerArray], followers);
       const updatedDoc2 = {
         $set: {
           followers: newFollower,
