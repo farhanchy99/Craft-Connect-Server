@@ -42,6 +42,7 @@ async function run() {
       .collection("reportedProduct");
     const reportedPost = client.db("Craft-Connect").collection("reportedPost");
     const payments = client.db("Craft-Connect").collection("payments");
+    const messenger = client.db("Messenger").collection("messenger");
 
     // home page get api
     app.get("/", (req, res) => {
@@ -469,6 +470,28 @@ async function run() {
       const result = await allProducts.deleteOne({ _id: ObjectId(id) });
       res.send(result);
     });
+
+    app.get("/message/:id", async (req, res) => {
+      const recieverId = req.params.id;
+      const filter = { recieverId: recieverId };
+      const result = await messenger.find(filter).toArray();
+      res.send(result);
+    });
+
+    app.get("/allmesseges", async (req, res) => {
+      const query = {};
+      const result = await messenger.find(query).toArray();
+      res.send(result.reverse());
+    });
+
+    app.post("/send-messenger", async (req, res) => {
+      const sendmssg = req.body;
+      const result = await messenger.insertOne(sendmssg);
+      res.send(result);
+    });
+
+
+
     // HOME page get api
     app.get("/", (req, res) => {
       res.send("Craft connect server is running..");
