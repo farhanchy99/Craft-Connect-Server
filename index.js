@@ -225,6 +225,16 @@ async function run() {
       const result = await usersPost.find(query).toArray();
       res.send(result);
     });
+    //get users posts in users profile
+    app.get("/users-post", async (req, res) => {
+      const email = req.query.email;
+      console.log(email);
+      const query = {
+        userEmail: email,
+      };
+      const result = await usersPost.find(query).toArray();
+      res.send(result);
+    });
 
     //get user by email // my profile
     app.get("/users", async (req, res) => {
