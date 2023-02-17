@@ -1,9 +1,10 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 8000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
+const http = require('http').createServer(app);
 
 //middleware
 app.use(cors());
@@ -141,7 +142,7 @@ async function run() {
       res.send(userByEmail);
     });
     app.put("/update-users/:id", async (req, res) => {
-      const id = req.params.id;
+      const id = req.params.id; 
       const data = req.body;
       console.log(id);
       const { displayName, email, photoURL } = data;
