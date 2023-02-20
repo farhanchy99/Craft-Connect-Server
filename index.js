@@ -376,22 +376,25 @@ async function run() {
 
       const newFollower = [];
       const newFollowing = [];
+      const followerUid = followingUser[0]._id;
       const followerName = followingUser[0].displayName;
       const email = followingUser[0].email;
       const photoURL = followingUser[0].photoURL;
       const existingFollower = [...followingUser[0]?.followers];
-      const followers = { followerName, email, photoURL };
+      const followers = { followerName, email, photoURL, followerUid };
       const newFollowers = followerUser[0]?.followers;
       newFollower.push(...newFollowers, followers);
 
+      const followingUid = followerUser[0]._id;
       const followingName = followerUser[0].displayName;
       const followingEmail = followerUser[0].email;
       const followingPhotoURL = followerUser[0].photoURL;
       const existingFollowing = followingUser[0]?.following;
       console.log("from 271", existingFollower, existingFollowing);
-      const followings = { followingName, followingEmail, followingPhotoURL };
+      const followings = { followingName, followingEmail, followingPhotoURL, followingUid };
       newFollowing.push(...existingFollowing, followings);
-      console.log("from 277", newFollower, newFollowing);
+      console.log(followingUser)
+      console.log(followerUser)
 
       const updatedDoc1 = {
         $set: {
@@ -539,10 +542,18 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/allmesseges", async (req, res) => {
-      const query = {};
-      const result = await messenger.find(query).toArray();
-      res.send(result.reverse());
+    app.get("/send-messenger/:id/getMessage/:myId", async (req, res) => {
+      const frndId = req.params.id;
+      const myId = req.params.myId;
+      console.log(frndId);
+      console.log(myId);
+      const result = await messenger.find({}).toArray();
+      const filter = result.filter(
+        (m) =>
+          (m.senderId === myId && m.recieverId === frndId) ||
+          (m.recieverId === myId && m.senderId === frndId)
+      );
+      res.send(filter);
     });
 
     app.post("/send-messenger", async (req, res) => {
