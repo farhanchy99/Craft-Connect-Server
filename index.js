@@ -43,7 +43,9 @@ async function run() {
     const reportedPost = client.db("Craft-Connect").collection("reportedPost");
     const payments = client.db("Craft-Connect").collection("payments");
     const messenger = client.db("Messenger").collection("messenger");
-
+    const followersDb = client.db("Craft-Connect").collection("Friends");
+    //get follow
+    
     // home page get api
     app.get("/", (req, res) => {
       res.send("Craft connect server is running..");
@@ -393,6 +395,7 @@ async function run() {
       console.log("from 271", existingFollower, existingFollowing);
       const followings = { followingName, followingEmail, followingPhotoURL, followingUid };
       newFollowing.push(...existingFollowing, followings);
+      const folowerAndFollowingDb = {followerName, email, photoURL, followerUid, followingName, followingEmail, followingPhotoURL, followingUid}
       console.log(followingUser)
       console.log(followerUser)
 
@@ -410,8 +413,15 @@ async function run() {
       const option = { upsert: true };
       const result1 = await users.updateOne(query, updatedDoc1, option);
       const result2 = await users.updateOne(filter, updatedDoc2, option);
-      console.log(result1, result2);
+      const followersData = await followersDb.insertOne(folowerAndFollowingDb)
+      console.log(result1, updatedDoc2);
       res.send(result1);
+    });
+
+    app.get("/followers/:email", async (req, res) => {
+      const email = req.params.email;
+      const result = await followersDb.find({email: email}).toArray();
+      res.send(result.reverse());
     });
 
     // postReaction
