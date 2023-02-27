@@ -46,6 +46,8 @@ async function run() {
     const followersDb = client.db("Craft-Connect").collection("Friends");
     //get follow
     
+    const sharedPost = client.db("Craft-Connect").collection("sharedPost");
+
     // home page get api
     app.get("/", (req, res) => {
       res.send("Craft connect server is running..");
@@ -576,6 +578,23 @@ async function run() {
     app.get("/", (req, res) => {
       res.send("Craft connect server is running..");
     });
+
+    app.post("/sharedPost", async(req, res) =>{
+      const data = req.body;
+      const result = await sharedPost.insertOne(data)
+      res.send(result)
+    })
+    app.get("/sharedPost/:email", async(req, res) =>{
+      const email = req.params.email;
+      const result = await sharedPost.find({sharedUserEmail: email}).toArray();
+      res.send(result.reverse())
+    })
+    app.get("/sharedPost", async(req, res) =>{
+      const query = {};
+      const result = await sharedPost.find(query).toArray();
+      res.send(result.reverse());
+    })
+
   } finally {
   }
 }
